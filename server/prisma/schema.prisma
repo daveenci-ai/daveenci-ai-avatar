@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+  @@map("status")
+}
+
+enum TouchpointSource {
+  MANUAL
+  EMAIL
+  PHONE
+  WEBSITE
+  SOCIAL
+  @@map("touchpoint_source")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  validated Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  
+  // Relations
+  contacts Contact[]
+  
+  @@map("users")
+}
+
+model Contact {
+  id             Int      @id @default(autoincrement())
+  name           String
+  primaryEmail   String   @map("primary_email")
+  secondaryEmail String?  @map("secondary_email")
+  primaryPhone   String?  @map("primary_phone")
+  secondaryPhone String?  @map("secondary_phone")
+  company        String?
+  industry       String?
+  website        String?
+  address        String?
+  source         String?
+  status         Status
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
+  userId         Int      @map("user_id")
+  
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  touchpoints Touchpoint[]
+  avatars     Avatar[]     // Added missing relation to Avatar
+  
+  @@map("contacts")
+}
+
+model Avatar {
+  id          BigInt   @id @default(autoincrement())
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  contactId   Int?     @map("contact_id") // Made nullable to match schema
+  fullName    String   @map("full_name") @db.VarChar(255)
+  hfRepo      String   @unique @map("hf_repo")
+  triggerWord String   @map("trigger_word") @db.VarChar(100)
+  description String?
+  visible     Boolean  @default(true)
+  
+  // Relations
+  contact         Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  avatarsGenerated AvatarGenerated[]
+  
+  @@map("avatars")
+}
+
+model AvatarGenerated {
+  id             BigInt   @id @default(autoincrement())
+  avatarId       BigInt   @map("avatar_id")
+  prompt         String
+  githubImageUrl String   @map("github_image_url")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  
+  // Relations
+  avatar Avatar @relation(fields: [avatarId], references: [id], onDelete: Cascade, map: "fk_avatar")
+  
+  @@index([avatarId], map: "idx_avatars_generated_avatar_id")
+  @@map("avatars_generated")
+}
+
+model Event {
+  id               Int      @id @default(autoincrement())
+  eventDate        DateTime? @map("event_date") @db.Timestamp(3)
+  eventName        String?  @map("event_name")
+  eventAddress     String?  @map("event_address")
+  eventType        String?  @map("event_type")
+  eventDescription String?  @map("event_description")
+  eventCapacity    Int?     @map("event_capacity")
+  eventStatus      String?  @map("event_status")
+  dt               DateTime @default(now()) @db.Timestamp(3)
+  dtUpdated        DateTime @default(now()) @updatedAt @map("dt_updated") @db.Timestamp(3)
+  
+  // Relations
+  participants EventParticipant[]
+  
+  @@index([eventDate], map: "idx_events_date")
+  @@index([eventStatus], map: "idx_events_status")
+  @@index([eventType], map: "idx_events_type")
+  @@map("events")
+}
+
+model EventParticipant {
+  id          Int      @id @default(autoincrement())
+  eventId     Int?     @map("event_id")
+  fullName    String?  @map("full_name")
+  email       String?
+  phone       String?
+  companyName String?  @map("company_name")
+  website     String?
+  notes       String?
+  dt          DateTime @default(now()) @db.Timestamp(3)
+  dtUpdated   DateTime @default(now()) @updatedAt @map("dt_updated") @db.Timestamp(3)
+  
+  // Relations
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  
+  @@index([email], map: "idx_participants_email")
+  @@index([eventId], map: "idx_participants_event")
+  @@map("event_participants")
+}
+
+model Touchpoint {
+  id        Int             @id @default(autoincrement())
+  note      String
+  source    TouchpointSource @default(MANUAL)
+  contactId Int             @map("contact_id")
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamp(3)
+  
+  // Relations
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  
+  @@map("touchpoints")
+} 
