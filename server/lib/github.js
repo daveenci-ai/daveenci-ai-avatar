@@ -46,7 +46,7 @@ class GitHubImageStorage {
   /**
    * Generate a unique filename for the image
    */
-  generateFilename(prompt, avatarName, extension = 'webp') {
+  generateFilename(prompt, avatarName, extension = 'jpg') {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const promptHash = crypto.createHash('md5').update(prompt).digest('hex').substring(0, 8);
     const safeAvatarName = avatarName.toLowerCase().replace(/[^a-z0-9]/g, '-');

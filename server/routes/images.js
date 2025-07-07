@@ -196,7 +196,10 @@ router.get('/history', authenticateToken, async (req, res) => {
       prisma.avatarGenerated.findMany({
         where: { 
           avatarId: { in: avatarIds },
-          githubImageUrl: { not: { startsWith: 'PENDING_REVIEW:' } } // Only show approved images
+          AND: [
+            { githubImageUrl: { not: { startsWith: 'PENDING_REVIEW:' } } }, // Only approved images
+            { githubImageUrl: { startsWith: 'https://raw.githubusercontent.com/' } } // Only GitHub-stored images
+          ]
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -219,7 +222,10 @@ router.get('/history', authenticateToken, async (req, res) => {
       prisma.avatarGenerated.count({
         where: { 
           avatarId: { in: avatarIds },
-          githubImageUrl: { not: { startsWith: 'PENDING_REVIEW:' } } // Only count approved images
+          AND: [
+            { githubImageUrl: { not: { startsWith: 'PENDING_REVIEW:' } } }, // Only approved images
+            { githubImageUrl: { startsWith: 'https://raw.githubusercontent.com/' } } // Only GitHub-stored images
+          ]
         }
       })
     ]);
@@ -623,7 +629,7 @@ router.post('/:imageId/download', authenticateToken, async (req, res) => {
     res.json({
       message: 'Image ready for download',
       downloadUrl: downloadUrl,
-      filename: `${image.avatar.fullName}-${image.id}.webp`
+      filename: `${image.avatar.fullName}-${image.id}.jpg`
     });
 
   } catch (error) {

@@ -23,6 +23,7 @@ const Generate = () => {
   const [avatarsLoading, setAvatarsLoading] = useState(true);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [error, setError] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     fetchAvatars();
@@ -458,7 +459,8 @@ const Generate = () => {
                     <img
                       src={image.imageUrl}
                       alt={`Generated ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() => setSelectedImage(image)}
                     />
                     
                     {/* Overlay actions */}
@@ -575,6 +577,80 @@ const Generate = () => {
           )}
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setSelectedImage(null)}>
+          <div className="max-w-4xl max-h-[90vh] mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-lg overflow-hidden">
+              <img
+                src={selectedImage.imageUrl}
+                alt={selectedImage.prompt}
+                className="w-full h-auto max-h-[70vh] object-contain"
+              />
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Generated Image</h3>
+                <p className="text-gray-600 mb-3">{selectedImage.prompt}</p>
+                {selectedImage.avatar && (
+                  <p className="text-sm text-blue-600 mb-3">
+                    Avatar: {selectedImage.avatar.fullName} ({selectedImage.avatar.triggerWord})
+                  </p>
+                )}
+                <p className="text-sm text-gray-500 mb-4">
+                  Created: {new Date(selectedImage.createdAt).toLocaleDateString()}
+                </p>
+                
+                <div className="flex space-x-3">
+                  {selectedImage.isPendingReview ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          handleLike(selectedImage.id);
+                          setSelectedImage(null);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        👍 Like (Save to GitHub)
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleReviewDownload(selectedImage.id);
+                          setSelectedImage(null);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        ⬇️ Download
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDislike(selectedImage.id);
+                          setSelectedImage(null);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        👎 Dislike
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleRegularDownload(selectedImage.imageUrl, selectedImage.prompt)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Download
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedImage(null)}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
