@@ -39,7 +39,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https://raw.githubusercontent.com"],
+      imgSrc: ["'self'", "data:", "https://raw.githubusercontent.com", "https://replicate.delivery"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "https://api.replicate.com", "https://replicate.delivery"],
       objectSrc: ["'none'"],
