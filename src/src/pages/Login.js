@@ -26,7 +26,7 @@ const Login = () => {
         toast.success('Welcome back!');
         navigate('/dashboard');
       } else {
-        toast.error(result.error);
+        toast.error(result.message || 'Login failed');
       }
     } catch (error) {
       toast.error('An unexpected error occurred');

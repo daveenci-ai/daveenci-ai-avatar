@@ -29,7 +29,7 @@ const Register = () => {
         toast.success('Account created successfully!');
         navigate('/dashboard');
       } else {
-        toast.error(result.error);
+        toast.error(result.message || 'Registration failed');
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
@@ -100,21 +100,7 @@ const Register = () => {
               )}
             </div>
 
-            {/* HuggingFace Repository */}
-            <div>
-              <label htmlFor="hf_repo" className="block text-sm font-medium text-gray-700">
-                HuggingFace Repository (Optional)
-              </label>
-              <input
-                {...register('hf_repo')}
-                type="text"
-                className="input mt-1"
-                placeholder="e.g., username/my-lora-model"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Your custom LoRA weights repository on HuggingFace (can be set later)
-              </p>
-            </div>
+
 
             {/* Password */}
             <div>
