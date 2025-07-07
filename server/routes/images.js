@@ -19,7 +19,7 @@ const generateImageSchema = Joi.object({
   lora_scale: Joi.number().min(0).max(1).default(0.8),
   num_outputs: Joi.number().integer().min(1).max(4).default(1),
   aspect_ratio: Joi.string().valid('1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3').default('1:1'),
-  output_format: Joi.string().valid('webp', 'jpg', 'png').default('webp'),
+  output_format: Joi.string().valid('webp', 'jpg', 'png').default('jpg'),
   guidance_scale: Joi.number().min(1).max(20).default(3.5),
   num_inference_steps: Joi.number().integer().min(1).max(50).default(28),
   seed: Joi.number().integer().optional(),
@@ -89,58 +89,30 @@ router.post('/generate', authenticateToken, async (req, res) => {
     // Output is an array of image URLs
     const imageUrls = Array.isArray(output) ? output : [output];
 
-    // Save images for review (upload to GitHub immediately for preview)
+    // Save images for review (keep temporary URLs for now, upload on user action)
     const savedImages = await Promise.all(
       imageUrls.map(async (imageUrl) => {
-        console.log(`💾 Uploading image to GitHub for preview: ${avatar.fullName}`);
+        console.log(`💾 Saving image for review: ${avatar.fullName}`);
         
-        try {
-          // Upload to GitHub immediately so it can be previewed
-          const uploadResult = await githubStorage.uploadImage(
-            imageUrl, 
-            enhancedPrompt, 
-            avatar.fullName
-          );
-          
-          // Save with GitHub URL and pending review flag
-          return await prisma.avatarGenerated.create({
-            data: {
-              prompt: enhancedPrompt,
-              githubImageUrl: `PENDING_REVIEW:${uploadResult.url}`, // GitHub URL with review flag
-              avatarId: BigInt(avatarId)
-            },
-            include: {
-              avatar: {
-                select: {
-                  id: true,
-                  fullName: true,
-                  replicateModelUrl: true,
-                  triggerWord: true
-                }
+        // Save with temporary Replicate URL for review
+        // We'll upload to GitHub when user approves (like/download)
+        return await prisma.avatarGenerated.create({
+          data: {
+            prompt: enhancedPrompt,
+            githubImageUrl: `PENDING_REVIEW:${imageUrl}`, // Temporary URL with review flag
+            avatarId: BigInt(avatarId)
+          },
+          include: {
+            avatar: {
+              select: {
+                id: true,
+                fullName: true,
+                replicateModelUrl: true,
+                triggerWord: true
               }
             }
-          });
-        } catch (uploadError) {
-          console.error('Failed to upload image immediately:', uploadError);
-          // Fallback to temporary URL if GitHub upload fails
-          return await prisma.avatarGenerated.create({
-            data: {
-              prompt: enhancedPrompt,
-              githubImageUrl: `PENDING_REVIEW:${imageUrl}`, // Temporary URL with review flag
-              avatarId: BigInt(avatarId)
-            },
-            include: {
-              avatar: {
-                select: {
-                  id: true,
-                  fullName: true,
-                  replicateModelUrl: true,
-                  triggerWord: true
-                }
-              }
-            }
-          });
-        }
+          }
+        });
       })
     );
 
@@ -262,6 +234,10 @@ router.get('/history', authenticateToken, async (req, res) => {
     const serializedImages = images.map(image => {
       const isPendingReview = image.githubImageUrl.startsWith('PENDING_REVIEW:');
       const actualImageUrl = isPendingReview ? image.githubImageUrl.replace('PENDING_REVIEW:', '') : image.githubImageUrl;
+      
+      // Debug logging
+      console.log(`🔍 DEBUG - Database URL: ${image.githubImageUrl}`);
+      console.log(`🔍 DEBUG - Actual URL: ${actualImageUrl}`);
       
       return {
         id: image.id.toString(),
@@ -506,17 +482,22 @@ router.post('/:imageId/like', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Image is not pending review' });
     }
 
-    const githubUrl = image.githubImageUrl.replace('PENDING_REVIEW:', '');
+    const replicateUrl = image.githubImageUrl.replace('PENDING_REVIEW:', '');
 
     try {
-      // Image is already uploaded to GitHub, just approve by removing the PENDING_REVIEW prefix
-      console.log(`👍 Approving image (already uploaded to GitHub): ${image.avatar.fullName}`);
-      
-      // Update database to remove PENDING_REVIEW prefix
+      // Upload to GitHub
+      console.log(`👍 Approving and uploading image to GitHub for avatar: ${image.avatar.fullName}`);
+      const uploadResult = await githubStorage.uploadImage(
+        replicateUrl, 
+        image.prompt, 
+        image.avatar.fullName
+      );
+
+      // Update database with GitHub URL
       const updatedImage = await prisma.avatarGenerated.update({
         where: { id: imageId },
         data: {
-          githubImageUrl: githubUrl // Remove PENDING_REVIEW prefix
+          githubImageUrl: uploadResult.url
         },
         include: {
           avatar: {
@@ -543,14 +524,17 @@ router.post('/:imageId/like', authenticateToken, async (req, res) => {
         } : updatedImage.avatar
       };
 
+      // Debug logging
+      console.log(`🔍 DEBUG - Stored GitHub URL: ${updatedImage.githubImageUrl}`);
+
       res.json({
-        message: 'Image approved successfully',
+        message: 'Image approved and uploaded to GitHub successfully',
         image: serializedImage
       });
 
-    } catch (error) {
-      console.error('Failed to approve image:', error);
-      res.status(500).json({ message: 'Failed to approve image' });
+    } catch (uploadError) {
+      console.error('Failed to upload approved image to GitHub:', uploadError);
+      res.status(500).json({ message: 'Failed to upload image to GitHub' });
     }
 
   } catch (error) {
@@ -601,20 +585,7 @@ router.post('/:imageId/dislike', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Image is not pending review' });
     }
 
-    // Delete from GitHub since image was already uploaded
-    const githubUrl = image.githubImageUrl.replace('PENDING_REVIEW:', '');
-    if (githubUrl.startsWith('https://raw.githubusercontent.com/')) {
-      try {
-        console.log(`🗑️ Deleting rejected image from GitHub: ${githubUrl}`);
-        await githubStorage.deleteImage(githubUrl);
-        console.log(`✅ Rejected image deleted from GitHub successfully`);
-      } catch (githubError) {
-        console.error('Failed to delete rejected image from GitHub:', githubError);
-        // Continue with database deletion even if GitHub deletion fails
-      }
-    }
-
-    // Delete from database
+    // Delete from database (no need to delete from GitHub since it's not uploaded yet)
     await prisma.avatarGenerated.delete({
       where: { id: imageId }
     });
@@ -678,28 +649,33 @@ router.post('/:imageId/download', authenticateToken, async (req, res) => {
     let downloadUrl;
     
     if (image.githubImageUrl.startsWith('PENDING_REVIEW:')) {
-      // Image is already uploaded to GitHub, just get the URL and approve it
-      const githubUrl = image.githubImageUrl.replace('PENDING_REVIEW:', '');
-      
+      // Upload to GitHub first
+      const replicateUrl = image.githubImageUrl.replace('PENDING_REVIEW:', '');
+
       try {
-        console.log(`💾 Approving image for download: ${image.avatar.fullName}`);
-        
-        // Update database to remove PENDING_REVIEW prefix
+        console.log(`💾 Approving and uploading image for download: ${image.avatar.fullName}`);
+        const uploadResult = await githubStorage.uploadImage(
+          replicateUrl, 
+          image.prompt, 
+          image.avatar.fullName
+        );
+
+        // Update database with GitHub URL
         await prisma.avatarGenerated.update({
           where: { id: imageId },
           data: {
-            githubImageUrl: githubUrl
+            githubImageUrl: uploadResult.url
           }
         });
 
-        downloadUrl = githubUrl;
-      } catch (error) {
-        console.error('Failed to approve image for download:', error);
-        // Fallback to original GitHub URL
-        downloadUrl = githubUrl;
+        downloadUrl = uploadResult.url;
+      } catch (uploadError) {
+        console.error('Failed to upload image for download:', uploadError);
+        // Fallback to original Replicate URL
+        downloadUrl = replicateUrl;
       }
     } else {
-      // Already approved, use existing GitHub URL
+      // Already uploaded, use existing GitHub URL
       downloadUrl = image.githubImageUrl;
     }
 
