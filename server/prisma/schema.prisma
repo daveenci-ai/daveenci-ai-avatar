@@ -87,8 +87,6 @@ model AvatarGenerated {
   avatarId       BigInt   @map("avatar_id")
   prompt         String
   githubImageUrl String   @map("github_image_url")
-  githubPath     String?  @map("github_path")
-  githubSha      String?  @map("github_sha")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   
   // Relations

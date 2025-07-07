@@ -69,7 +69,7 @@ class GitHubImageStorage {
       console.log(`📤 Uploading image to GitHub: ${path}`);
       
       // Upload to GitHub
-      const response = await this.octokit.repos.createOrUpdateFileContents({
+      await this.octokit.repos.createOrUpdateFileContents({
         owner: this.owner,
         repo: this.repo,
         path: path,
@@ -84,10 +84,7 @@ class GitHubImageStorage {
       console.log(`✅ Image uploaded successfully: ${githubUrl}`);
       
       return {
-        url: githubUrl,
-        path: path,
-        filename: filename,
-        sha: response.data.content.sha
+        url: githubUrl
       };
       
     } catch (error) {
@@ -96,27 +93,7 @@ class GitHubImageStorage {
     }
   }
 
-  /**
-   * Delete image from GitHub repository
-   */
-  async deleteImage(path, sha) {
-    try {
-      await this.octokit.repos.deleteFile({
-        owner: this.owner,
-        repo: this.repo,
-        path: path,
-        message: `Delete generated image: ${path}`,
-        sha: sha,
-        branch: this.branch
-      });
-      
-      console.log(`🗑️ Image deleted from GitHub: ${path}`);
-      return true;
-    } catch (error) {
-      console.error('Error deleting image from GitHub:', error);
-      throw new Error(`Failed to delete image from GitHub: ${error.message}`);
-    }
-  }
+
 
   /**
    * Test GitHub connection

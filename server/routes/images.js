@@ -101,13 +101,11 @@ router.post('/generate', authenticateToken, async (req, res) => {
             avatar.fullName
           );
 
-          // Save to database with GitHub metadata
+          // Save to database with GitHub URL
           return await prisma.avatarGenerated.create({
             data: {
               prompt: enhancedPrompt,
               githubImageUrl: uploadResult.url,
-              githubPath: uploadResult.path,
-              githubSha: uploadResult.sha,
               avatarId: BigInt(avatarId)
             },
             include: {
@@ -130,8 +128,6 @@ router.post('/generate', authenticateToken, async (req, res) => {
             data: {
               prompt: enhancedPrompt,
               githubImageUrl: imageUrl, // Keep original Replicate URL as fallback
-              githubPath: null,
-              githubSha: null,
               avatarId: BigInt(avatarId)
             },
             include: {
@@ -362,17 +358,7 @@ router.delete('/:imageId', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Image not found' });
     }
 
-    // Delete from GitHub if metadata exists
-    if (image.githubPath && image.githubSha) {
-      try {
-        console.log(`🗑️ Deleting image from GitHub: ${image.githubPath}`);
-        await githubStorage.deleteImage(image.githubPath, image.githubSha);
-      } catch (githubError) {
-        console.error('Failed to delete image from GitHub:', githubError);
-        // Continue with database deletion even if GitHub deletion fails
-      }
-    }
-
+    // Delete from database (GitHub images remain for now)
     await prisma.avatarGenerated.delete({
       where: { id: imageId }
     });
