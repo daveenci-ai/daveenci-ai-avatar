@@ -359,6 +359,14 @@ router.delete('/:imageId', authenticateToken, async (req, res) => {
       where: {
         id: imageId,
         avatarId: { in: avatarIds }
+      },
+      include: {
+        avatar: {
+          select: {
+            id: true,
+            fullName: true
+          }
+        }
       }
     });
 
@@ -366,10 +374,48 @@ router.delete('/:imageId', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Image not found' });
     }
 
-    // Delete from database (GitHub images remain for now)
+    // Delete from GitHub if it's a GitHub-stored image
+    if (image.githubImageUrl && 
+        image.githubImageUrl.startsWith('https://raw.githubusercontent.com/') &&
+        !image.githubImageUrl.startsWith('PENDING_REVIEW:')) {
+      
+      try {
+        console.log(`🗑️ Deleting image from GitHub: ${image.githubImageUrl}`);
+        await githubStorage.deleteImage(image.githubImageUrl);
+        console.log(`✅ Image deleted from GitHub successfully`);
+      } catch (githubError) {
+        console.error('Failed to delete image from GitHub:', githubError);
+        // Continue with database deletion even if GitHub deletion fails
+      }
+    }
+
+    // Delete from database
     await prisma.avatarGenerated.delete({
       where: { id: imageId }
     });
+
+    // Check if this was the last image for this avatar and clean up folder
+    if (image.avatar) {
+      try {
+        const remainingImages = await prisma.avatarGenerated.count({
+          where: {
+            avatarId: image.avatarId,
+            githubImageUrl: {
+              startsWith: 'https://raw.githubusercontent.com/',
+              not: { startsWith: 'PENDING_REVIEW:' }
+            }
+          }
+        });
+
+        if (remainingImages === 0) {
+          console.log(`📁 No more images for avatar ${image.avatar.fullName}, checking folder cleanup`);
+          await githubStorage.deleteAvatarFolderIfEmpty(image.avatar.fullName);
+        }
+      } catch (cleanupError) {
+        console.error('Failed to cleanup avatar folder:', cleanupError);
+        // Don't fail the whole operation for cleanup issues
+      }
+    }
 
     res.json({ message: 'Image deleted successfully' });
   } catch (error) {

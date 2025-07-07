@@ -143,7 +143,10 @@ class GitHubImageStorage {
       
       // Generate unique filename
       const filename = this.generateFilename(prompt, avatarName);
-      const path = `generated/${filename}`;
+      
+      // Create avatar-specific folder path
+      const safeAvatarName = avatarName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const path = `avatars/${safeAvatarName}/${filename}`;
       
       console.log(`📤 Uploading image to GitHub: ${path}`);
       
@@ -166,6 +169,88 @@ class GitHubImageStorage {
     } catch (error) {
       console.error('Error uploading image to GitHub:', error);
       throw new Error(`Failed to upload image to GitHub: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete image from GitHub repository
+   */
+  async deleteImage(githubUrl) {
+    try {
+      // Extract path from GitHub URL
+      // URL format: https://raw.githubusercontent.com/owner/repo/branch/path
+      const urlParts = githubUrl.replace('https://raw.githubusercontent.com/', '').split('/');
+      const path = urlParts.slice(3).join('/'); // Remove owner/repo/branch, keep path
+      
+      console.log(`🗑️ Deleting image from GitHub: ${path}`);
+      
+      // Get file info first to get SHA
+      const fileInfo = await this.getFileInfo(path);
+      
+      if (!fileInfo.exists) {
+        console.log(`⚠️ File does not exist: ${path}`);
+        return { success: true, message: 'File not found (already deleted)' };
+      }
+      
+      // Delete the file
+      await this.octokit.repos.deleteFile({
+        owner: this.owner,
+        repo: this.repo,
+        path: path,
+        message: `Delete image: ${path}`,
+        sha: fileInfo.sha,
+        branch: this.branch
+      });
+      
+      console.log(`✅ Image deleted successfully: ${path}`);
+      return { success: true, message: 'Image deleted successfully' };
+      
+    } catch (error) {
+      console.error('Error deleting image from GitHub:', error);
+      throw new Error(`Failed to delete image from GitHub: ${error.message}`);
+    }
+  }
+
+  /**
+   * Check if avatar folder is empty and delete it if so
+   */
+  async deleteAvatarFolderIfEmpty(avatarName) {
+    try {
+      const safeAvatarName = avatarName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const folderPath = `avatars/${safeAvatarName}`;
+      
+      console.log(`🔍 Checking if avatar folder is empty: ${folderPath}`);
+      
+      // Try to list contents of the folder
+      try {
+        const response = await this.octokit.repos.getContent({
+          owner: this.owner,
+          repo: this.repo,
+          path: folderPath,
+          ref: this.branch
+        });
+        
+        // If we get here, folder exists and has contents
+        if (Array.isArray(response.data) && response.data.length === 0) {
+          console.log(`📁 Avatar folder is empty, but GitHub doesn't track empty folders`);
+          // GitHub doesn't track empty folders, so nothing to delete
+          return { success: true, message: 'Folder is empty (no files to delete)' };
+        } else {
+          console.log(`📁 Avatar folder still has ${response.data.length} files`);
+          return { success: true, message: 'Folder still has files' };
+        }
+      } catch (error) {
+        if (error.status === 404) {
+          console.log(`📁 Avatar folder not found: ${folderPath}`);
+          return { success: true, message: 'Folder not found (already deleted)' };
+        }
+        throw error;
+      }
+      
+    } catch (error) {
+      console.error('Error checking avatar folder:', error);
+      // Don't throw error for folder cleanup, just log it
+      return { success: false, message: error.message };
     }
   }
 

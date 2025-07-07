@@ -89,6 +89,8 @@ const Generate = () => {
       console.log('Generating image with data:', requestData);
       
       const response = await imageAPI.generate(requestData);
+      console.log('Image generation response:', response.data);
+      console.log('Generated images:', response.data.images);
       setGeneratedImages(response.data.images);
       
       // Clear form on success
@@ -110,7 +112,9 @@ const Generate = () => {
   const handleLike = async (imageId) => {
     try {
       setError('');
+      console.log('Liking image:', imageId);
       const response = await imageAPI.like(imageId);
+      console.log('Like response:', response.data);
       
       // Update the image in the list to mark as approved
       setGeneratedImages(generatedImages.map(img => 
@@ -118,6 +122,7 @@ const Generate = () => {
           ? { ...response.data.image, isPendingReview: false }
           : img
       ));
+      console.log('Updated generated images after like');
     } catch (error) {
       console.error('Failed to approve image:', error);
       setError('Failed to approve image');
@@ -431,7 +436,9 @@ const Generate = () => {
 
         {/* Generated Images - 2/3 width */}
         <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Generated Images</h2>
+          {(generatedImages.length > 0 || loading) && (
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Generated Images</h2>
+          )}
           
           {loading && (
             <div className="flex items-center justify-center py-12">
@@ -461,7 +468,28 @@ const Generate = () => {
                       alt={`Generated ${index + 1}`}
                       className="w-full h-full object-cover cursor-pointer"
                       onClick={() => setSelectedImage(image)}
+                      onError={(e) => {
+                        console.error('Image failed to load:', image.imageUrl);
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully:', image.imageUrl);
+                      }}
                     />
+                    {/* Error fallback */}
+                    <div 
+                      className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm"
+                      style={{display: 'none'}}
+                    >
+                      <div className="text-center">
+                        <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <p>Image failed to load</p>
+                        <p className="text-xs mt-1">URL: {image.imageUrl.substring(0, 50)}...</p>
+                      </div>
+                    </div>
                     
                     {/* Overlay actions */}
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
