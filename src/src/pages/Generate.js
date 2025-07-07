@@ -135,15 +135,15 @@ const Generate = () => {
   const selectedAvatar = avatars.find(avatar => avatar.id.toString() === formData.avatarId);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8" style={{maxWidth: '1400px'}}>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Generate Images</h1>
         <p className="text-gray-600">Create AI-generated images using your custom avatars</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Generation Form */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Generation Form - 1/3 width */}
+        <div className="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Avatar Selection */}
             <div>
@@ -359,8 +359,8 @@ const Generate = () => {
           </form>
         </div>
 
-        {/* Generated Images */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        {/* Generated Images - 2/3 width */}
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Generated Images</h2>
           
           {loading && (
@@ -374,7 +374,7 @@ const Generate = () => {
           )}
 
           {generatedImages.length > 0 && !loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {generatedImages.map((image, index) => (
                 <div key={image.id} className="border rounded-lg overflow-hidden">
                   <img
