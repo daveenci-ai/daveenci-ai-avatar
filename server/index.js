@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 // Import routes
@@ -39,6 +40,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../src/build')));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -59,9 +63,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+// Serve React app for all non-API routes (SPA routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../src/build/index.html'));
 });
 
 app.listen(PORT, () => {
