@@ -105,6 +105,75 @@ const Generate = () => {
     }
   };
 
+  // Review action handlers
+  const handleLike = async (imageId) => {
+    try {
+      setError('');
+      const response = await imageAPI.like(imageId);
+      
+      // Update the image in the list to mark as approved
+      setGeneratedImages(generatedImages.map(img => 
+        img.id === imageId 
+          ? { ...response.data.image, isPendingReview: false }
+          : img
+      ));
+    } catch (error) {
+      console.error('Failed to approve image:', error);
+      setError('Failed to approve image');
+    }
+  };
+
+  const handleDislike = async (imageId) => {
+    try {
+      setError('');
+      await imageAPI.dislike(imageId);
+      
+      // Remove the image from the list
+      setGeneratedImages(generatedImages.filter(img => img.id !== imageId));
+    } catch (error) {
+      console.error('Failed to reject image:', error);
+      setError('Failed to reject image');
+    }
+  };
+
+  const handleReviewDownload = async (imageId) => {
+    try {
+      setError('');
+      const response = await imageAPI.download(imageId);
+      
+      // Update the image status and download
+      const { downloadUrl, filename } = response.data;
+      
+      // Update image status in the list
+      setGeneratedImages(generatedImages.map(img => 
+        img.id === imageId 
+          ? { ...img, isPendingReview: false, imageUrl: downloadUrl }
+          : img
+      ));
+      
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      setError('Failed to download image');
+    }
+  };
+
+  const handleRegularDownload = (imageUrl, prompt) => {
+    const filename = `davinci-ai-${Date.now()}.jpg`;
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (avatarsLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -376,16 +445,83 @@ const Generate = () => {
           {generatedImages.length > 0 && !loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {generatedImages.map((image, index) => (
-                <div key={image.id} className="border rounded-lg overflow-hidden">
-                  <img
-                    src={image.imageUrl}
-                    alt={`Generated ${index + 1}`}
-                    className="w-full h-auto"
-                  />
+                <div key={image.id} className={`border rounded-lg overflow-hidden group relative ${image.isPendingReview ? 'ring-2 ring-orange-200' : ''}`}>
+                  <div className="aspect-square relative overflow-hidden bg-gray-100">
+                    {/* Pending Review Badge */}
+                    {image.isPendingReview && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                          Pending Review
+                        </span>
+                      </div>
+                    )}
+                    <img
+                      src={image.imageUrl}
+                      alt={`Generated ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Overlay actions */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      {image.isPendingReview ? (
+                        /* Review Actions */
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleLike(image.id)}
+                            className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                            title="Like (Save to GitHub)"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleReviewDownload(image.id)}
+                            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                            title="Download (Save & Download)"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDislike(image.id)}
+                            className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                            title="Dislike (Delete)"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        /* Regular Actions */
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleRegularDownload(image.imageUrl, image.prompt)}
+                            className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                            title="Download"
+                          >
+                            <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div className="p-3 bg-gray-50">
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {image.prompt}
-                    </p>
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-sm text-gray-600 line-clamp-2 flex-1">
+                        {image.prompt}
+                      </p>
+                      {image.isPendingReview && (
+                        <span className="ml-2 text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                          Review
+                        </span>
+                      )}
+                    </div>
                     {image.avatar && (
                       <p className="text-xs text-gray-500 mt-1">
                         Avatar: {image.avatar.fullName}
@@ -395,14 +531,31 @@ const Generate = () => {
                       <span className="text-xs text-gray-500">
                         {new Date(image.createdAt).toLocaleDateString()}
                       </span>
-                      <a
-                        href={image.imageUrl}
-                        download
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        Download
-                      </a>
                     </div>
+                    
+                    {/* Review Actions (Mobile) */}
+                    {image.isPendingReview && (
+                      <div className="mt-3 flex space-x-2 sm:hidden">
+                        <button
+                          onClick={() => handleLike(image.id)}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs py-2 px-3 rounded transition-colors"
+                        >
+                          👍 Like
+                        </button>
+                        <button
+                          onClick={() => handleReviewDownload(image.id)}
+                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-xs py-2 px-3 rounded transition-colors"
+                        >
+                          ⬇️ Download
+                        </button>
+                        <button
+                          onClick={() => handleDislike(image.id)}
+                          className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded transition-colors"
+                        >
+                          👎 Dislike
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
