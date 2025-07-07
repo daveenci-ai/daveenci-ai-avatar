@@ -48,6 +48,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Handle favicon.ico requests (redirect to SVG)
+app.get('/favicon.ico', (req, res) => {
+  res.redirect(301, '/favicon.svg');
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/avatars', avatarRoutes);
