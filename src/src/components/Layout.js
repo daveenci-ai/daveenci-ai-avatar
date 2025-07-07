@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   Sparkles, 
-  Images, 
+  Image, 
   User, 
   LogOut,
   Menu,
@@ -21,7 +21,7 @@ const Layout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Generate', href: '/generate', icon: Sparkles },
-    { name: 'Gallery', href: '/gallery', icon: Images },
+    { name: 'Gallery', href: '/gallery', icon: Image },
     { name: 'Profile', href: '/profile', icon: User },
   ];
 
