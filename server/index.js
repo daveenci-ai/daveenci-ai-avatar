@@ -15,8 +15,8 @@ const userRoutes = require('./routes/users');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Trust proxy for rate limiting (needed for Render deployment)
-app.set('trust proxy', true);
+// Trust proxy for rate limiting (secure configuration for Render deployment)
+app.set('trust proxy', 1); // Trust only the first proxy (Render's load balancer)
 
 // Rate limiting
 const limiter = rateLimit({
