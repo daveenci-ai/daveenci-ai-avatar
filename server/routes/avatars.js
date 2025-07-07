@@ -8,7 +8,7 @@ const router = express.Router();
 // Validation schema for avatar creation/update
 const avatarSchema = Joi.object({
   fullName: Joi.string().min(2).max(255).required(),
-  hfRepo: Joi.string().required(),
+  replicateModelUrl: Joi.string().required(),
   triggerWord: Joi.string().min(1).max(100).required(),
   description: Joi.string().optional().allow('', null),
   visible: Joi.boolean().default(true)
@@ -37,7 +37,7 @@ router.get('/', authenticateToken, async (req, res) => {
       select: {
         id: true,
         fullName: true,
-        hfRepo: true,
+        replicateModelUrl: true,
         triggerWord: true,
         description: true,
         visible: true,
@@ -77,7 +77,7 @@ router.get('/:avatarId', authenticateToken, async (req, res) => {
       select: {
         id: true,
         fullName: true,
-        hfRepo: true,
+        replicateModelUrl: true,
         triggerWord: true,
         description: true,
         visible: true,
@@ -105,22 +105,22 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { fullName, hfRepo, triggerWord, description, visible } = value;
+    const { fullName, replicateModelUrl, triggerWord, description, visible } = value;
 
-    // Check if hf_repo already exists
+    // Check if replicate_model_url already exists
     const existingAvatar = await prisma.avatar.findUnique({
-      where: { hfRepo }
+      where: { replicateModelUrl }
     });
 
     if (existingAvatar) {
-      return res.status(400).json({ message: 'This HuggingFace repository is already in use' });
+      return res.status(400).json({ message: 'This Replicate model URL is already in use' });
     }
 
     const avatar = await prisma.avatar.create({
       data: {
         contactId: null, // Set to null for now since we don't have direct user relationship
         fullName,
-        hfRepo,
+        replicateModelUrl,
         triggerWord,
         description,
         visible
@@ -128,7 +128,7 @@ router.post('/', authenticateToken, async (req, res) => {
       select: {
         id: true,
         fullName: true,
-        hfRepo: true,
+        replicateModelUrl: true,
         triggerWord: true,
         description: true,
         visible: true,
@@ -180,16 +180,16 @@ router.put('/:avatarId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { fullName, hfRepo, triggerWord, description, visible } = value;
+    const { fullName, replicateModelUrl, triggerWord, description, visible } = value;
 
-    // Check if hf_repo already exists (excluding current avatar)
-    if (hfRepo !== existingAvatar.hfRepo) {
+    // Check if replicate_model_url already exists (excluding current avatar)
+    if (replicateModelUrl !== existingAvatar.replicateModelUrl) {
       const duplicateRepo = await prisma.avatar.findUnique({
-        where: { hfRepo }
+        where: { replicateModelUrl }
       });
 
       if (duplicateRepo) {
-        return res.status(400).json({ message: 'This HuggingFace repository is already in use' });
+        return res.status(400).json({ message: 'This Replicate model URL is already in use' });
       }
     }
 
@@ -197,7 +197,7 @@ router.put('/:avatarId', authenticateToken, async (req, res) => {
       where: { id: avatarId },
       data: {
         fullName,
-        hfRepo,
+        replicateModelUrl,
         triggerWord,
         description,
         visible,
@@ -206,7 +206,7 @@ router.put('/:avatarId', authenticateToken, async (req, res) => {
       select: {
         id: true,
         fullName: true,
-        hfRepo: true,
+        replicateModelUrl: true,
         triggerWord: true,
         description: true,
         visible: true,

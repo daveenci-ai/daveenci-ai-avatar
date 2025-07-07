@@ -64,7 +64,7 @@ router.post('/generate', authenticateToken, async (req, res) => {
     }
 
     console.log(`🎨 Generating image for user ${user.email} with avatar: "${avatar.fullName}"`);
-    console.log(`📦 Using LoRA weights: ${avatar.hfRepo}`);
+    console.log(`📦 Using Replicate model: ${avatar.replicateModelUrl}`);
     console.log(`🎯 Trigger word: ${avatar.triggerWord}`);
 
     // Enhance prompt with trigger word if not already included
@@ -76,7 +76,7 @@ router.post('/generate', authenticateToken, async (req, res) => {
     // Prepare Replicate input
     const input = {
       prompt: enhancedPrompt,
-      lora_weights: avatar.hfRepo,
+      lora_weights: avatar.replicateModelUrl,
       ...options
     };
 
@@ -113,7 +113,7 @@ router.post('/generate', authenticateToken, async (req, res) => {
                 select: {
                   id: true,
                   fullName: true,
-                  hfRepo: true,
+                  replicateModelUrl: true,
                   triggerWord: true
                 }
               }
@@ -135,7 +135,7 @@ router.post('/generate', authenticateToken, async (req, res) => {
                 select: {
                   id: true,
                   fullName: true,
-                  hfRepo: true,
+                  replicateModelUrl: true,
                   triggerWord: true
                 }
               }
@@ -217,7 +217,7 @@ router.get('/history', authenticateToken, async (req, res) => {
             select: {
               id: true,
               fullName: true,
-              hfRepo: true,
+              replicateModelUrl: true,
               triggerWord: true
             }
           }
@@ -291,7 +291,7 @@ router.get('/:imageId', authenticateToken, async (req, res) => {
           select: {
             id: true,
             fullName: true,
-            hfRepo: true,
+            replicateModelUrl: true,
             triggerWord: true
           }
         }

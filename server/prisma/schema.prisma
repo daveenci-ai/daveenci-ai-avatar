@@ -65,15 +65,15 @@ model Contact {
 }
 
 model Avatar {
-  id          BigInt   @id @default(autoincrement())
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-  contactId   Int?     @map("contact_id") // Made nullable to match schema
-  fullName    String   @map("full_name") @db.VarChar(255)
-  hfRepo      String   @unique @map("hf_repo")
-  triggerWord String   @map("trigger_word") @db.VarChar(100)
-  description String?
-  visible     Boolean  @default(true)
+  id                 BigInt   @id @default(autoincrement())
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  contactId          Int?     @map("contact_id")
+  fullName           String   @map("full_name") @db.VarChar(255)
+  replicateModelUrl  String   @unique @map("replicate_model_url") @db.Text
+  triggerWord        String   @map("trigger_word") @db.VarChar(100)
+  description        String?  @db.Text
+  visible            Boolean  @default(true)
   
   // Relations
   contact         Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)

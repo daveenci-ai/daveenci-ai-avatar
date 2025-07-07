@@ -13,7 +13,7 @@ const Profile = () => {
   const [editingAvatar, setEditingAvatar] = useState(null);
   const [avatarForm, setAvatarForm] = useState({
     fullName: '',
-    hfRepo: '',
+    replicateModelUrl: '',
     triggerWord: '',
     description: '',
     visible: true
@@ -82,13 +82,13 @@ const Profile = () => {
       }
       
       // Reset form and refresh avatars
-      setAvatarForm({
-        fullName: '',
-        hfRepo: '',
-        triggerWord: '',
-        description: '',
-        visible: true
-      });
+          setAvatarForm({
+      fullName: '',
+      replicateModelUrl: '',
+      triggerWord: '',
+      description: '',
+      visible: true
+    });
       setShowAvatarForm(false);
       setEditingAvatar(null);
       await fetchAvatars();
@@ -101,13 +101,13 @@ const Profile = () => {
 
   const handleEditAvatar = (avatar) => {
     setEditingAvatar(avatar);
-    setAvatarForm({
-      fullName: avatar.fullName,
-      hfRepo: avatar.hfRepo,
-      triggerWord: avatar.triggerWord,
-      description: avatar.description || '',
-      visible: avatar.visible
-    });
+          setAvatarForm({
+        fullName: avatar.fullName,
+        replicateModelUrl: avatar.replicateModelUrl,
+        triggerWord: avatar.triggerWord,
+        description: avatar.description || '',
+        visible: avatar.visible
+      });
     setShowAvatarForm(true);
   };
 
@@ -128,7 +128,7 @@ const Profile = () => {
   const resetAvatarForm = () => {
     setAvatarForm({
       fullName: '',
-      hfRepo: '',
+      replicateModelUrl: '',
       triggerWord: '',
       description: '',
       visible: true
@@ -262,7 +262,7 @@ const Profile = () => {
                 </div>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><span className="font-medium">Trigger Word:</span> {avatar.triggerWord}</p>
-                  <p><span className="font-medium">HF Repository:</span> {avatar.hfRepo}</p>
+                  <p><span className="font-medium">Replicate Model URL:</span> {avatar.replicateModelUrl}</p>
                   {avatar.description && (
                     <p><span className="font-medium">Description:</span> {avatar.description}</p>
                   )}
@@ -307,18 +307,18 @@ const Profile = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  HuggingFace Repository *
+                  Replicate Model URL *
                 </label>
                 <input
                   type="text"
-                  value={avatarForm.hfRepo}
-                  onChange={(e) => setAvatarForm(prev => ({ ...prev, hfRepo: e.target.value }))}
+                  value={avatarForm.replicateModelUrl}
+                  onChange={(e) => setAvatarForm(prev => ({ ...prev, replicateModelUrl: e.target.value }))}
                   required
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="username/repository-name"
+                  placeholder="https://replicate.com/username/model-name"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Must be a valid HuggingFace LoRA repository
+                  Must be a valid Replicate model URL
                 </p>
               </div>
 
