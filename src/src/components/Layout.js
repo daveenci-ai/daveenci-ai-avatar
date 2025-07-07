@@ -5,7 +5,7 @@ import {
   LayoutDashboard, 
   Sparkles, 
   Image, 
-  User, 
+  Plus,
   LogOut,
   Menu,
   X
@@ -16,13 +16,12 @@ const Layout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Generate', href: '/generate', icon: Sparkles },
-    { name: 'Gallery', href: '/gallery', icon: Image },
-    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'All Models', href: '/generate', icon: Sparkles },
+    { name: 'All Avatars', href: '/gallery', icon: Image },
   ];
 
   const handleLogout = () => {
@@ -30,109 +29,138 @@ const Layout = () => {
     navigate('/login');
   };
 
+  const handleAddModel = () => {
+    navigate('/generate');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Top Navigation Bar */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            
+            {/* Left side - Brand/Logo */}
+            <div className="flex items-center space-x-3">
+              <Sparkles className="w-8 h-8 text-blue-600" />
+              <Link to="/dashboard" className="flex items-center space-x-2">
+                <span className="text-xl font-bold text-gray-900">DaVeenci</span>
+                <span className="text-sm text-gray-500 hidden sm:inline">(Custom Avatar)</span>
+              </Link>
+            </div>
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-8 h-8 text-primary-600" />
-            <span className="text-xl font-bold text-gray-900">DaVinci AI</span>
-          </div>
-          <button
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <nav className="mt-8 px-4">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              
-              return (
-                <li key={item.name}>
+            {/* Center - Navigation Menu (Desktop) */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                
+                return (
                   <Link
+                    key={item.name}
                     to={item.href}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'text-blue-700 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                     }`}
-                    onClick={() => setSidebarOpen(false)}
                   >
-                    <Icon className="w-5 h-5 mr-3" />
-                    {item.name}
+                    <Icon className="w-4 h-4" />
+                    <span>{item.name}</span>
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+                );
+              })}
+            </div>
 
-        {/* User section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-white">
-                  {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-                </span>
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-4">
+              {/* Add Model Button */}
+              <button
+                onClick={handleAddModel}
+                className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Model</span>
+              </button>
+
+              {/* User Info & Logout */}
+              <div className="flex items-center space-x-3">
+                {/* User Avatar */}
+                <div className="hidden sm:flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-700">{user?.name || user?.email}</span>
+                </div>
+
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-red-600 transition-colors text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
               </div>
+
+              {/* Mobile menu button */}
+              <button
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.name || 'User'}
-              </p>
-              <p className="text-xs text-gray-500 truncate">
-                {user?.email}
-              </p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
-      </div>
+
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium ${
+                      isActive
+                        ? 'text-blue-700 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+              
+              {/* Mobile Add Model Button */}
+              <button
+                onClick={() => {
+                  handleAddModel();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center space-x-3 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md text-base font-medium"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Add Model</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </nav>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200 lg:hidden">
-          <div className="flex items-center justify-between h-16 px-4">
-            <button
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-6 h-6 text-primary-600" />
-              <span className="text-lg font-bold text-gray-900">DaVinci AI</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Page content */}
-        <main className="flex-1">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1">
+        <Outlet />
+      </main>
     </div>
   );
 };

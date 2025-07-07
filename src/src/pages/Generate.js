@@ -8,12 +8,12 @@ const Generate = () => {
   const [formData, setFormData] = useState({
     prompt: '',
     avatarId: '',
-    lora_scale: 0.8,
-    num_outputs: 1,
+    lora_scale: 1,
+    num_outputs: 4,
     aspect_ratio: '1:1',
-    output_format: 'webp',
-    guidance_scale: 3.5,
-    num_inference_steps: 28,
+    output_format: 'jpg',
+    guidance_scale: 2,
+    num_inference_steps: 36,
     seed: '',
     go_fast: true
   });

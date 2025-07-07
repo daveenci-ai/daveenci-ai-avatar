@@ -54,6 +54,65 @@ const Gallery = () => {
     document.body.removeChild(link);
   };
 
+  // Review action handlers
+  const handleLike = async (imageId) => {
+    try {
+      setError('');
+      const response = await imageAPI.like(imageId);
+      
+      // Update the image in the list to mark as approved
+      setImages(images.map(img => 
+        img.id === imageId 
+          ? { ...response.data.image, isPendingReview: false }
+          : img
+      ));
+    } catch (error) {
+      console.error('Failed to approve image:', error);
+      setError('Failed to approve image');
+    }
+  };
+
+  const handleDislike = async (imageId) => {
+    try {
+      setError('');
+      await imageAPI.dislike(imageId);
+      
+      // Remove the image from the list
+      setImages(images.filter(img => img.id !== imageId));
+    } catch (error) {
+      console.error('Failed to reject image:', error);
+      setError('Failed to reject image');
+    }
+  };
+
+  const handleReviewDownload = async (imageId) => {
+    try {
+      setError('');
+      const response = await imageAPI.download(imageId);
+      
+      // Update the image status and download
+      const { downloadUrl, filename } = response.data;
+      
+      // Update image status in the list
+      setImages(images.map(img => 
+        img.id === imageId 
+          ? { ...img, isPendingReview: false, imageUrl: downloadUrl }
+          : img
+      ));
+      
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      setError('Failed to download image');
+    }
+  };
+
   const handleCopyUrl = async (imageUrl) => {
     try {
       await navigator.clipboard.writeText(imageUrl);
@@ -109,8 +168,16 @@ const Gallery = () => {
       {filteredImages.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {filteredImages.map((image) => (
-            <div key={image.id} className="bg-white rounded-lg shadow-md overflow-hidden group">
+            <div key={image.id} className={`bg-white rounded-lg shadow-md overflow-hidden group relative ${image.isPendingReview ? 'ring-2 ring-orange-200' : ''}`}>
               <div className="aspect-square relative overflow-hidden bg-gray-100">
+                {/* Pending Review Badge */}
+                {image.isPendingReview && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                      Pending Review
+                    </span>
+                  </div>
+                )}
                 <img
                   src={image.imageUrl}
                   alt={image.prompt}
@@ -120,51 +187,101 @@ const Gallery = () => {
                 
                 {/* Overlay actions */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(image.imageUrl, image.prompt);
-                      }}
-                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
-                      title="Download"
-                    >
-                      <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopyUrl(image.imageUrl);
-                      }}
-                      className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
-                      title="Copy URL"
-                    >
-                      <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(image.id);
-                      }}
-                      className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
-                      title="Delete"
-                    >
-                      <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+                  {image.isPendingReview ? (
+                    /* Review Actions */
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike(image.id);
+                        }}
+                        className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                        title="Like (Save to GitHub)"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReviewDownload(image.id);
+                        }}
+                        className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                        title="Download (Save & Download)"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDislike(image.id);
+                        }}
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        title="Dislike (Delete)"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    /* Regular Actions */
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(image.imageUrl, image.prompt);
+                        }}
+                        className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                        title="Download"
+                      >
+                        <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyUrl(image.imageUrl);
+                        }}
+                        className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                        title="Copy URL"
+                      >
+                        <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(image.id);
+                        }}
+                        className="p-2 bg-white rounded-full hover:bg-red-50 transition-colors"
+                        title="Delete"
+                      >
+                        <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               
               <div className="p-4">
-                <p className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
-                  {image.prompt.length > 60 ? `${image.prompt.substring(0, 60)}...` : image.prompt}
-                </p>
+                <div className="flex items-start justify-between mb-1">
+                  <p className="text-sm font-medium text-gray-900 line-clamp-2 flex-1">
+                    {image.prompt.length > 60 ? `${image.prompt.substring(0, 60)}...` : image.prompt}
+                  </p>
+                  {image.isPendingReview && (
+                    <span className="ml-2 text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                      Review
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500">
                   {new Date(image.createdAt).toLocaleDateString()}
                 </p>
@@ -172,6 +289,30 @@ const Gallery = () => {
                   <p className="text-xs text-blue-600 mt-1">
                     Avatar: {image.avatar.fullName}
                   </p>
+                )}
+                
+                {/* Review Actions (Mobile) */}
+                {image.isPendingReview && (
+                  <div className="mt-3 flex space-x-2 sm:hidden">
+                    <button
+                      onClick={() => handleLike(image.id)}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs py-2 px-3 rounded transition-colors"
+                    >
+                      👍 Like
+                    </button>
+                    <button
+                      onClick={() => handleReviewDownload(image.id)}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-xs py-2 px-3 rounded transition-colors"
+                    >
+                      ⬇️ Download
+                    </button>
+                    <button
+                      onClick={() => handleDislike(image.id)}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs py-2 px-3 rounded transition-colors"
+                    >
+                      👎 Dislike
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

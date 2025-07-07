@@ -61,7 +61,11 @@ export const imageAPI = {
   getHistory: (page = 1, limit = 20) => 
     api.get(`/images/history?page=${page}&limit=${limit}`),
   getById: (id) => api.get(`/images/${id}`),
-  delete: (id) => api.delete(`/images/${id}`)
+  delete: (id) => api.delete(`/images/${id}`),
+  // Review actions
+  like: (id) => api.post(`/images/${id}/like`),
+  dislike: (id) => api.post(`/images/${id}/dislike`),
+  download: (id) => api.post(`/images/${id}/download`)
 };
 
 // User API
