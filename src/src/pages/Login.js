@@ -24,7 +24,7 @@ const Login = () => {
       const result = await login(data);
       if (result.success) {
         toast.success('Welcome back!');
-        navigate('/dashboard');
+        navigate('/generate');
       } else {
         toast.error(result.message || 'Login failed');
       }

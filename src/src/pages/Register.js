@@ -27,7 +27,7 @@ const Register = () => {
       const result = await registerUser(data);
       if (result.success) {
         toast.success('Account created successfully!');
-        navigate('/dashboard');
+        navigate('/generate');
       } else {
         toast.error(result.message || 'Registration failed');
       }

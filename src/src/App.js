@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
+// Dashboard removed - redirecting to Generate instead
 import Generate from './pages/Generate';
 import Gallery from './pages/Gallery';
 import Profile from './pages/Profile';
@@ -31,7 +31,7 @@ const PublicRoute = ({ children }) => {
     return <LoadingSpinner />;
   }
   
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
+      return !isAuthenticated ? children : <Navigate to="/generate" />;
 };
 
 function AppContent() {
@@ -57,15 +57,14 @@ function AppContent() {
               <Layout />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="/dashboard" />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route index element={<Navigate to="/generate" />} />
             <Route path="generate" element={<Generate />} />
             <Route path="gallery" element={<Gallery />} />
             <Route path="profile" element={<Profile />} />
           </Route>
           
           {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+                      <Route path="*" element={<Navigate to="/generate" />} />
         </Routes>
         
         {/* Toast notifications */}
