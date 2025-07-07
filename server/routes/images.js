@@ -3,6 +3,7 @@ const Joi = require('joi');
 const Replicate = require('replicate');
 const prisma = require('../lib/database');
 const { authenticateToken } = require('../middleware/auth');
+const githubStorage = require('../lib/github');
 
 const router = express.Router();
 
@@ -88,26 +89,63 @@ router.post('/generate', authenticateToken, async (req, res) => {
     // Output is an array of image URLs
     const imageUrls = Array.isArray(output) ? output : [output];
 
-    // Save generated images to database
+    // Upload images to GitHub and save to database
     const savedImages = await Promise.all(
       imageUrls.map(async (imageUrl) => {
-        return await prisma.avatarGenerated.create({
-          data: {
-            prompt: enhancedPrompt,
-            githubImageUrl: imageUrl,
-            avatarId: BigInt(avatarId)
-          },
-          include: {
-            avatar: {
-              select: {
-                id: true,
-                fullName: true,
-                hfRepo: true,
-                triggerWord: true
+        try {
+          // Upload to GitHub repository
+          console.log(`📤 Uploading image to GitHub for avatar: ${avatar.fullName}`);
+          const uploadResult = await githubStorage.uploadImage(
+            imageUrl, 
+            enhancedPrompt, 
+            avatar.fullName
+          );
+
+          // Save to database with GitHub metadata
+          return await prisma.avatarGenerated.create({
+            data: {
+              prompt: enhancedPrompt,
+              githubImageUrl: uploadResult.url,
+              githubPath: uploadResult.path,
+              githubSha: uploadResult.sha,
+              avatarId: BigInt(avatarId)
+            },
+            include: {
+              avatar: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  hfRepo: true,
+                  triggerWord: true
+                }
               }
             }
-          }
-        });
+          });
+        } catch (uploadError) {
+          console.error('Failed to upload image to GitHub:', uploadError);
+          
+          // Fallback: save with original Replicate URL if GitHub upload fails
+          console.log('⚠️ Falling back to Replicate URL due to GitHub upload failure');
+          return await prisma.avatarGenerated.create({
+            data: {
+              prompt: enhancedPrompt,
+              githubImageUrl: imageUrl, // Keep original Replicate URL as fallback
+              githubPath: null,
+              githubSha: null,
+              avatarId: BigInt(avatarId)
+            },
+            include: {
+              avatar: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  hfRepo: true,
+                  triggerWord: true
+                }
+              }
+            }
+          });
+        }
       })
     );
 
@@ -322,6 +360,17 @@ router.delete('/:imageId', authenticateToken, async (req, res) => {
 
     if (!image) {
       return res.status(404).json({ message: 'Image not found' });
+    }
+
+    // Delete from GitHub if metadata exists
+    if (image.githubPath && image.githubSha) {
+      try {
+        console.log(`🗑️ Deleting image from GitHub: ${image.githubPath}`);
+        await githubStorage.deleteImage(image.githubPath, image.githubSha);
+      } catch (githubError) {
+        console.error('Failed to delete image from GitHub:', githubError);
+        // Continue with database deletion even if GitHub deletion fails
+      }
     }
 
     await prisma.avatarGenerated.delete({
