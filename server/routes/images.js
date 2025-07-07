@@ -194,7 +194,10 @@ router.get('/history', authenticateToken, async (req, res) => {
 
     const [images, total] = await Promise.all([
       prisma.avatarGenerated.findMany({
-        where: { avatarId: { in: avatarIds } },
+        where: { 
+          avatarId: { in: avatarIds },
+          githubImageUrl: { not: { startsWith: 'PENDING_REVIEW:' } } // Only show approved images
+        },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -214,7 +217,10 @@ router.get('/history', authenticateToken, async (req, res) => {
         }
       }),
       prisma.avatarGenerated.count({
-        where: { avatarId: { in: avatarIds } }
+        where: { 
+          avatarId: { in: avatarIds },
+          githubImageUrl: { not: { startsWith: 'PENDING_REVIEW:' } } // Only count approved images
+        }
       })
     ]);
 

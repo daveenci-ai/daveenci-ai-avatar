@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  LayoutDashboard, 
   Sparkles, 
   Image, 
   Plus,
@@ -19,9 +18,8 @@ const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'All Models', href: '/generate', icon: Sparkles },
-    { name: 'All Avatars', href: '/gallery', icon: Image },
+    { name: 'Generate Images', href: '/generate', icon: Sparkles },
+    { name: 'Avatar Gallery', href: '/gallery', icon: Image },
   ];
 
   const handleLogout = () => {
@@ -30,7 +28,7 @@ const Layout = () => {
   };
 
   const handleAddModel = () => {
-    navigate('/generate');
+    navigate('/profile');
   };
 
   return (
@@ -43,7 +41,7 @@ const Layout = () => {
             {/* Left side - Brand/Logo */}
             <div className="flex items-center space-x-3">
               <Sparkles className="w-8 h-8 text-blue-600" />
-              <Link to="/dashboard" className="flex items-center space-x-2">
+              <Link to="/generate" className="flex items-center space-x-2">
                 <span className="text-xl font-bold text-gray-900">DaVeenci</span>
                 <span className="text-sm text-gray-500 hidden sm:inline">(Custom Avatar)</span>
               </Link>
@@ -74,13 +72,13 @@ const Layout = () => {
 
             {/* Right side - Action buttons */}
             <div className="flex items-center space-x-4">
-              {/* Add Model Button */}
+              {/* Add Avatar Model Button */}
               <button
                 onClick={handleAddModel}
                 className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add Model</span>
+                <span>Add Avatar Model</span>
               </button>
 
               {/* User Info & Logout */}
@@ -141,7 +139,7 @@ const Layout = () => {
                 );
               })}
               
-              {/* Mobile Add Model Button */}
+              {/* Mobile Add Avatar Model Button */}
               <button
                 onClick={() => {
                   handleAddModel();
@@ -150,7 +148,7 @@ const Layout = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md text-base font-medium"
               >
                 <Plus className="w-5 h-5" />
-                <span>Add Model</span>
+                <span>Add Avatar Model</span>
               </button>
             </div>
           </div>
