@@ -32,8 +32,22 @@ const imageLimiter = rateLimit({
   message: 'Too many image generation requests, please try again later.'
 });
 
-// Middleware
-app.use(helmet());
+// Middleware with custom CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https://raw.githubusercontent.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", "https://api.replicate.com", "https://replicate.delivery"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"]
+    }
+  }
+}));
 app.use(limiter);
 app.use(morgan('combined'));
 app.use(cors({
