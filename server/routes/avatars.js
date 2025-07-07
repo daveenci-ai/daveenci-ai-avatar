@@ -46,7 +46,13 @@ router.get('/', authenticateToken, async (req, res) => {
       }
     });
 
-    res.json({ avatars });
+    // Convert BigInt to string for JSON serialization
+    const serializedAvatars = avatars.map(avatar => ({
+      ...avatar,
+      id: avatar.id.toString()
+    }));
+
+    res.json({ avatars: serializedAvatars });
   } catch (error) {
     console.error('Avatars fetch error:', error);
     res.status(500).json({ message: 'Error fetching avatars' });
@@ -90,7 +96,13 @@ router.get('/:avatarId', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Avatar not found' });
     }
 
-    res.json({ avatar });
+    // Convert BigInt to string for JSON serialization
+    const serializedAvatar = {
+      ...avatar,
+      id: avatar.id.toString()
+    };
+
+    res.json({ avatar: serializedAvatar });
   } catch (error) {
     console.error('Avatar fetch error:', error);
     res.status(500).json({ message: 'Error fetching avatar' });
@@ -137,9 +149,15 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     });
 
+    // Convert BigInt to string for JSON serialization
+    const serializedAvatar = {
+      ...avatar,
+      id: avatar.id.toString()
+    };
+
     res.status(201).json({
       message: 'Avatar created successfully',
-      avatar
+      avatar: serializedAvatar
     });
   } catch (error) {
     console.error('Avatar creation error:', error);
@@ -215,9 +233,15 @@ router.put('/:avatarId', authenticateToken, async (req, res) => {
       }
     });
 
+    // Convert BigInt to string for JSON serialization
+    const serializedUpdatedAvatar = {
+      ...updatedAvatar,
+      id: updatedAvatar.id.toString()
+    };
+
     res.json({
       message: 'Avatar updated successfully',
-      avatar: updatedAvatar
+      avatar: serializedUpdatedAvatar
     });
   } catch (error) {
     console.error('Avatar update error:', error);

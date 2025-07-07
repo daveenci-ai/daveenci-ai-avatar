@@ -145,10 +145,21 @@ router.post('/generate', authenticateToken, async (req, res) => {
       })
     );
 
+    // Serialize BigInt values in savedImages
+    const serializedImages = savedImages.map(image => ({
+      ...image,
+      id: image.id.toString(),
+      avatarId: image.avatarId.toString(),
+      avatar: image.avatar ? {
+        ...image.avatar,
+        id: image.avatar.id.toString()
+      } : image.avatar
+    }));
+
     res.json({
       message: 'Images generated successfully',
-      images: savedImages,
-      count: savedImages.length,
+      images: serializedImages,
+      count: serializedImages.length,
       avatar: {
         id: avatar.id.toString(),
         fullName: avatar.fullName,
