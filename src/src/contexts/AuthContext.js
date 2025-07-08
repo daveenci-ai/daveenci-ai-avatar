@@ -57,7 +57,10 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      // Filter out confirmPassword as it's only used for frontend validation
+      const { confirmPassword, ...registrationData } = userData;
+      
+      const response = await api.post('/auth/register', registrationData);
       const { user, token } = response.data;
       
       localStorage.setItem('token', token);

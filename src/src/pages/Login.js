@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -40,14 +40,11 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="flex justify-center">
-            <Sparkles className="w-12 h-12 text-primary-600" />
-          </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Sign in to DaVinci AI
+            DaVeenci
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Create stunning AI avatars with custom LoRA weights
+            Create custom AI Avatars
           </p>
         </div>
 

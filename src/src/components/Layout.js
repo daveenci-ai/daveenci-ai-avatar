@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  Sparkles, 
   Image, 
   Plus,
   LogOut,
@@ -18,7 +17,7 @@ const Layout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Generate Images', href: '/generate', icon: Sparkles },
+    { name: 'Generate Images', href: '/generate', icon: Image },
     { name: 'Avatar Gallery', href: '/gallery', icon: Image },
   ];
 
@@ -35,15 +34,14 @@ const Layout = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation Bar */}
       <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{maxWidth: '1400px'}}>
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
             {/* Left side - Brand/Logo */}
             <div className="flex items-center space-x-3">
-              <Sparkles className="w-8 h-8 text-blue-600" />
-              <Link to="/generate" className="flex items-center space-x-2">
+              <Link to="/generate" className="flex flex-col">
                 <span className="text-xl font-bold text-gray-900">DaVeenci</span>
-                <span className="text-sm text-gray-500 hidden sm:inline">(Custom Avatar)</span>
+                <span className="text-xs text-gray-500">Custom Avatar</span>
               </Link>
             </div>
 
@@ -78,30 +76,17 @@ const Layout = () => {
                 className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add Avatar Model</span>
+                <span>Avatar Model</span>
               </button>
 
-              {/* User Info & Logout */}
-              <div className="flex items-center space-x-3">
-                {/* User Avatar */}
-                <div className="hidden sm:flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">
-                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-700">{user?.name || user?.email}</span>
-                </div>
-
-                {/* Logout Button */}
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-red-600 transition-colors text-sm font-medium"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-              </div>
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-red-600 transition-colors text-sm font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
 
               {/* Mobile menu button */}
               <button
@@ -148,7 +133,7 @@ const Layout = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md text-base font-medium"
               >
                 <Plus className="w-5 h-5" />
-                <span>Add Avatar Model</span>
+                <span>Avatar Model</span>
               </button>
             </div>
           </div>
